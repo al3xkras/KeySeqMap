@@ -2,15 +2,15 @@ import java.util.*;
 
 public class KeySeqMap<K extends Comparable<K>,V> {
 
-    private final Node<V> head = new Node<>();
-
+    private final Node<V> zero = new Node<>();
+    private final Node<V> head = new Node<>(zero);
 
     private final TreeMap<K,Long> keyMapping = new TreeMap<>();
     private final TreeMap<Long,K> inverseKeyMapping = new TreeMap<>();
     private long nextKeyMapping = 1L;
 
     private ArrayList<Long> mapAndUpdateMapping(Collection<K> keys){
-
+        //TODO test
         final LinkedList<K> notMapped = new LinkedList<>();
         ArrayList<Long> image = new ArrayList<>(keys.size());
 
@@ -35,6 +35,7 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     private Node<V> createOrFindNode(ArrayList<Long> keys){
+        //TODO test
         Node<V> iter = head;
         long currentKey=1L;
         for (long k : keys){
@@ -55,19 +56,106 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     public void add(List<K> keys, V value){
+        //TODO test
         ArrayList<Long> image = mapAndUpdateMapping(keys);
         Node<V> node = createOrFindNode(image);
         node.value=value;
     }
 
     public V findExact(Collection<K> keys){
+        //TODO test
         Node<V> node = createOrFindNode(mapAndUpdateMapping(keys));
         return node.value;
     }
 
 
+    private LinkedList<Node<V>> findAllRecursive(ArrayList<Long> keys, int start, int count){
+
+        long max = keys.get(keys.size()-1);
+        Set<Long> keySet = new HashSet<>(keys);
+
+        int skipped = 0;
+        int found = 0;
+
+        Node<V> iter = createOrFindNode(keys);
+        long rightMostKey = 1L;
+        Node<V> rightMost = iter;
+        while (rightMost.right!=null && rightMostKey<=max) {
+            rightMost=rightMost.right;
+            rightMostKey++;
+        }
+
+        LinkedList<Node<V>> out = new LinkedList<>();
+
+        boolean descend = false;
+
+        long currentKey = 1L;
+        while (found<count){
+
+            if (iter.equals(zero)) {
+                descend=true;
+                continue;
+            }
+
+            if (!descend){
+                if (iter.parent.left==iter && iter.parent.right!=null){
+                    iter = iter.parent.right;
+                    descend=true;
+                }
+                iter=iter.parent;
+                currentKey--;
+                continue;
+            }
+
+            if (keySet.contains(currentKey)){
+                if (iter.right!=null){
+                    iter = iter.right;
+                    if (currentKey==max){
+                        if (skipped<start){
+                            skipped++;
+                        } else {
+                            out.add(iter);
+                            found++;
+                        }
+                        descend = false;
+                        continue;
+                    }
+                    currentKey++;
+                } else {
+                    descend = false;
+                }
+
+            } else {
+                if (iter.left!=null){
+                    iter = iter.left;
+                    if (currentKey==max){
+                        if (skipped<start){
+                            skipped++;
+                        } else {
+                            out.add(iter);
+                            found++;
+                        }
+                        descend = false;
+                        continue;
+                    }
+                    currentKey++;
+                } else {
+                    if (iter==rightMost){
+                        break;
+                    }
+                    descend = false;
+                }
+            }
+        }
+
+        return out;
+    }
 
     public Iterator<V> findALl(List<K> keys){
+        ArrayList<Long> image = mapAndUpdateMapping(keys);
+
+
+        //TODO implement
         return null;
     }
 
