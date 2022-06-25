@@ -37,7 +37,7 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                 })
                 .forEach(intersection::retainAll);
 
-        //System.out.println(intersection);
+        System.out.println(intersection);
         return intersection;
     }
 
@@ -100,18 +100,17 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     protected LinkedList<V> findAll(List<K> keys){
 
         LinkedList<V> out = new LinkedList<>();
+
         ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
+        HashSet<Long> keysMappedSet = new HashSet<>(keysMapped);
         HashSet<Long> conn = updateAndGetConnections(keysMapped);
         Long maxKey = keysMapped.get(keysMapped.size()-1);
 
         LinkedList<Node<V>> iterNodes = new LinkedList<>();
         iterNodes.add(head);
 
-        int keysIter = 0;
-        long relatedKeyLast = 1L;
+        long relatedKeyLast = 0L;
         for (long relatedKey : conn) {
-
-            long currentKey = keysMapped.get(keysIter);
 
             for (long key = relatedKeyLast+1; key<relatedKey; key++){
 
@@ -119,20 +118,17 @@ public class KeySeqMap<K extends Comparable<K>,V> {
 
                 for (int i=0; i<sizeInitial; i++) {
                     Node<V> ithNode = iterNodes.removeFirst();
-                    if (keysIter>=keysMapped.size()-1 && ithNode.value!=null){
+                    if (key>=maxKey && ithNode.value!=null){
                         out.add(ithNode.value);
                     }
 
-                    if (key==currentKey){
+                    if (keysMappedSet.contains(key)){
                         if (ithNode.right!=null)
                             iterNodes.addLast(ithNode.right);
                     } else if (ithNode.left!=null) {
                         iterNodes.addLast(ithNode.left);
                     }
                 }
-
-                if (key==currentKey && keysIter<keysMapped.size()-1)
-                    keysIter++;
 
             }
 
@@ -141,7 +137,7 @@ public class KeySeqMap<K extends Comparable<K>,V> {
             int sizeInitial = iterNodes.size();
             for (int i=0; i<sizeInitial; i++) {
                 Node<V> ithNode = iterNodes.removeFirst();
-                if (keysIter>=keysMapped.size()-1 && ithNode.value!=null){
+                if (relatedKey>=maxKey && ithNode.value!=null){
                     out.add(ithNode.value);
                 }
                 if (ithNode.left!=null) {
@@ -154,14 +150,9 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                 }
             }
 
-
-
-            if (relatedKey==currentKey && keysIter<keysMapped.size()-1)
-                keysIter++;
-
             //System.out.println(currentKey);
             //System.out.println(relatedKey);
-            //System.out.println(iterNodes.stream().map(x->x.key+" = "+x.value).collect(Collectors.toList()));
+            System.out.println(iterNodes.stream().map(x->x.key+" = "+x.value).collect(Collectors.toList()));
 
             relatedKeyLast = relatedKey;
         }

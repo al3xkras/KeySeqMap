@@ -52,24 +52,24 @@ public class KeySeqMapTest {
         keySeqMap.add(Arrays.asList(2,4,5,6,7),"H");
 
         keySeqMap.add(Arrays.asList(1,2,4,5,7),"I");
-        /*
-        keySeqMap.add(Arrays.asList(2,4,8,9),"H");
-        keySeqMap.add(Arrays.asList(2,8,9),"I");
-        keySeqMap.add(Arrays.asList(2,4),"J");
-        keySeqMap.add(Arrays.asList(2,4,8,13,14),"K");
-        keySeqMap.add(Arrays.asList(2,4,8,13,14,9),"L");
 
-        keySeqMap.add(Arrays.asList(2,4,8,496,34,22),"M");
+        keySeqMap.add(Arrays.asList(2,4,8,9),"J");
+        keySeqMap.add(Arrays.asList(2,8,9),"K");
+        keySeqMap.add(Arrays.asList(2,4),"L");
+        keySeqMap.add(Arrays.asList(2,4,8,13,14),"M");
+        keySeqMap.add(Arrays.asList(2,4,8,13,14,9),"N");
 
-        keySeqMap.add(Arrays.asList(2,4,8,92,3,12,9),"N");
+        keySeqMap.add(Arrays.asList(2,4,8,496,34,22),"O");
 
-        keySeqMap.add(Arrays.asList(2,492,45,192,229,439,5,9),"O");
-        */
+        keySeqMap.add(Arrays.asList(2,4,8,92,3,12,9),"P");
+
+        keySeqMap.add(Arrays.asList(2,492,45,192,229,439,5,9),"Q");
+
         //Iterator<String> all = keySeqMap.findALl();
 
         //System.out.println(keySeqMap.head);
 
-        keySeqMap.findAll(Arrays.asList(2,4)).forEach(System.out::println);
+        keySeqMap.findAll(Arrays.asList(2,229)).stream().sorted().forEach(System.out::println);
 
     }
 }
