@@ -3,6 +3,7 @@ import org.junit.Test;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class KeySeqMapTest {
@@ -191,7 +192,6 @@ public class KeySeqMapTest {
             keys.add(new ArrayList<>(toAdd));
         }
 
-
         //keys.forEach(System.out::println);
 
         KeySeqMap<Integer,Integer> testMap = new KeySeqMap<>();
@@ -200,14 +200,20 @@ public class KeySeqMapTest {
         }
 
         for (int testId = 0; testId<tests.length; testId++) {
-            TreeSet<Integer> expected = new TreeSet<>(expectedByTest.get(testId));
+            TreeSet<Integer> expected = Arrays.stream(tests[testId]).filter(x -> x > 0).boxed().collect(Collectors.toCollection(TreeSet::new));
 
             TreeSet<Integer> actual = new TreeSet<>(testMap.findAll(
                     Arrays.stream(tests[testId]).skip(1).boxed().collect(Collectors.toList())
             ));
 
-            Assert.assertTrue(actual.containsAll(expected));
-            if (!actual.containsAll(expected)){
+            actual=actual.stream().map(x->keys.get(x-1)).map(TreeSet::new).reduce((x, y)->{
+                x.retainAll(y);
+                return x;
+            }).orElse(null);
+
+            Assert.assertNotNull(actual);
+            Assert.assertEquals(expected,actual);
+            if (!actual.equals(expected)){
                 System.out.println(expected);
                 System.out.println(actual);
                 System.out.println(testId);
