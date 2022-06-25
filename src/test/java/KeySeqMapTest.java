@@ -3,38 +3,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 
 public class KeySeqMapTest {
-
-    @Test
-    public void testCompareKeys(){
-
-        Assert.assertEquals(
-                0,(new KeySeqMap.KeySeq<>(Arrays.asList(1, 2, 3))).compareTo(
-                        new KeySeqMap.KeySeq<>(Arrays.asList(1, 2, 3)
-                )));
-
-        Assert.assertEquals(
-                0,(new KeySeqMap.KeySeq<>(Arrays.asList(6,3,1001))).compareTo(
-                        new KeySeqMap.KeySeq<>(Arrays.asList(1001, 3, 6)
-                        )));
-
-        Assert.assertEquals(
-                1,(new KeySeqMap.KeySeq<>(Arrays.asList(1, 2, 3))).compareTo(
-                        new KeySeqMap.KeySeq<>(Arrays.asList(1, 2, 1002)
-                        )));
-
-        Assert.assertEquals(
-                1,(new KeySeqMap.KeySeq<>(Arrays.asList(7,49,3))).compareTo(
-                        new KeySeqMap.KeySeq<>(Arrays.asList(49,3)
-                        )));
-
-        Assert.assertEquals(
-                -1,(new KeySeqMap.KeySeq<>(Arrays.asList(7,49,3))).compareTo(
-                        new KeySeqMap.KeySeq<>(Arrays.asList(7,49,3,10)
-                        )));
-    }
 
     @Test
     public void testFindExact1(){
@@ -71,13 +41,18 @@ public class KeySeqMapTest {
     public void testFindAll1(){
         KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>();
 
-        keySeqMap.add(Arrays.asList(1,2,3),"A");
-        keySeqMap.add(Arrays.asList(1,2,7,8),"B");
-        keySeqMap.add(Arrays.asList(1,9),"C");
-        keySeqMap.add(Arrays.asList(1,2,4),"D");
-        keySeqMap.add(Arrays.asList(2,4,8,9,10),"E");
-        keySeqMap.add(Arrays.asList(3,7,9),"F");
-        keySeqMap.add(Arrays.asList(3,4,6,10,12,14),"G");
+        keySeqMap.add(Arrays.asList(1,2,3,4,5,6),"A");
+        keySeqMap.add(Arrays.asList(1,2,4),"B");
+        keySeqMap.add(Arrays.asList(1,3),"C");
+        keySeqMap.add(Arrays.asList(2,5),"D");
+        keySeqMap.add(Arrays.asList(2,4,5),"E");
+        keySeqMap.add(Arrays.asList(1,4,6,7),"F");
+        keySeqMap.add(Arrays.asList(2,3,5,6),"G");
+
+        keySeqMap.add(Arrays.asList(2,4,5,6,7),"H");
+
+        keySeqMap.add(Arrays.asList(1,2,4,5,7),"I");
+        /*
         keySeqMap.add(Arrays.asList(2,4,8,9),"H");
         keySeqMap.add(Arrays.asList(2,8,9),"I");
         keySeqMap.add(Arrays.asList(2,4),"J");
@@ -89,13 +64,13 @@ public class KeySeqMapTest {
         keySeqMap.add(Arrays.asList(2,4,8,92,3,12,9),"N");
 
         keySeqMap.add(Arrays.asList(2,492,45,192,229,439,5,9),"O");
+        */
+        //Iterator<String> all = keySeqMap.findALl();
 
-        Iterator<String> all = keySeqMap.findALl(Arrays.asList(2,8,9));
+        //System.out.println(keySeqMap.head);
 
-        System.out.println(keySeqMap.findExact(Arrays.asList(2,4,8,9,10)));
-        while (all.hasNext()){
-            System.out.println(all.next());
-        }
+        keySeqMap.findAll(Arrays.asList(2,4)).forEach(System.out::println);
+
     }
 }
 

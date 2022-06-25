@@ -1,33 +1,60 @@
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class KeySeqMap<K extends Comparable<K>,V> {
 
-    private final Node<V> zero = new Node<>();
-    private final Node<V> head = new Node<>(zero);
+    protected final Node<V> head = new Node<>();
 
     private final TreeMap<K,Long> keyMapping = new TreeMap<>();
     private final TreeMap<Long,K> inverseKeyMapping = new TreeMap<>();
     private long nextKeyMapping = 1L;
 
-    private ArrayList<Long> mapAndUpdateMapping(Collection<K> keys){
+    private final TreeMap<Long,HashSet<Long>> connections = new TreeMap<>();
+
+    private void updateConnections(ArrayList<Long> keysMapped){
+        keysMapped.forEach(k->{
+            connections.get(k);
+            HashSet<Long> conn = connections.computeIfAbsent(k,x->new HashSet<>());
+            conn.addAll(keysMapped);
+            conn.remove(k);
+        });
+    }
+
+    protected HashSet<Long> updateAndGetConnections(ArrayList<Long> keysMapped){
         //TODO test
-        final LinkedList<K> notMapped = new LinkedList<>();
+        HashSet<Long> first = connections.computeIfAbsent(keysMapped.get(0),k->new HashSet<>());
+        first.addAll(keysMapped);
+        first.remove(keysMapped.get(0));
+        HashSet<Long> intersection =  new HashSet<>(first);
+
+        keysMapped.stream()
+                .skip(1)
+                .map(k->{
+                    HashSet<Long> conn = connections.computeIfAbsent(k,x->new HashSet<>());
+                    conn.addAll(keysMapped);
+                    conn.remove(k);
+                    return conn;
+                })
+                .forEach(intersection::retainAll);
+
+        //System.out.println(intersection);
+        return intersection;
+    }
+
+    protected ArrayList<Long> mapAndUpdateMapping(Collection<K> keys){
+        //TODO test
         ArrayList<Long> image = new ArrayList<>(keys.size());
 
         keys.forEach(k->{
             Long mapped = keyMapping.get(k);
             if (mapped==null){
-                notMapped.add(k);
+                keyMapping.put(k,nextKeyMapping);
+                inverseKeyMapping.put(nextKeyMapping,k);
+                image.add(nextKeyMapping);
+                nextKeyMapping++;
                 return;
             }
             image.add(mapped);
-        });
-
-        notMapped.forEach(n->{
-            keyMapping.put(n,nextKeyMapping);
-            inverseKeyMapping.put(nextKeyMapping,n);
-            image.add(nextKeyMapping);
-            nextKeyMapping++;
         });
 
         image.sort(Comparator.naturalOrder());
@@ -37,20 +64,20 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     private Node<V> createOrFindNode(ArrayList<Long> keys){
         //TODO test
         Node<V> iter = head;
-        long currentKey=1L;
+        long lastKey=1L;
         for (long k : keys){
 
-            for (long kToSkip = currentKey; kToSkip<k; kToSkip++){
+            for (long kToSkip = lastKey; kToSkip<k; kToSkip++){
                 if (iter.left==null){
-                    iter.left = new Node<>(iter);
+                    iter.left = new Node<>(iter,kToSkip+1);
                 }
                 iter = iter.left;
             }
             if (iter.right==null){
-                iter.right = new Node<>(iter);
+                iter.right = new Node<>(iter, k+1);
             }
             iter = iter.right;
-            currentKey = k;
+            lastKey = k+1;
         }
         return iter;
     }
@@ -58,6 +85,7 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     public void add(List<K> keys, V value){
         //TODO test
         ArrayList<Long> image = mapAndUpdateMapping(keys);
+        updateConnections(image);
         Node<V> node = createOrFindNode(image);
         node.value=value;
     }
@@ -69,141 +97,112 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
 
-    private LinkedList<Node<V>> findAllRecursive(ArrayList<Long> keys, int start, int count){
+    protected LinkedList<V> findAll(List<K> keys){
 
-        long max = keys.get(keys.size()-1);
-        Set<Long> keySet = new HashSet<>(keys);
+        LinkedList<V> out = new LinkedList<>();
+        ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
+        HashSet<Long> conn = updateAndGetConnections(keysMapped);
+        Long maxKey = keysMapped.get(keysMapped.size()-1);
 
-        int skipped = 0;
-        int found = 0;
+        LinkedList<Node<V>> iterNodes = new LinkedList<>();
+        iterNodes.add(head);
 
-        Node<V> iter = createOrFindNode(keys);
-        long rightMostKey = 1L;
-        Node<V> rightMost = iter;
-        while (rightMost.right!=null && rightMostKey<=max) {
-            rightMost=rightMost.right;
-            rightMostKey++;
+        int keysIter = 0;
+        long relatedKeyLast = 1L;
+        for (long relatedKey : conn) {
+
+            long currentKey = keysMapped.get(keysIter);
+
+            for (long key = relatedKeyLast+1; key<relatedKey; key++){
+
+                int sizeInitial = iterNodes.size();
+
+                for (int i=0; i<sizeInitial; i++) {
+                    Node<V> ithNode = iterNodes.removeFirst();
+                    if (keysIter>=keysMapped.size()-1 && ithNode.value!=null){
+                        out.add(ithNode.value);
+                    }
+
+                    if (key==currentKey){
+                        if (ithNode.right!=null)
+                            iterNodes.addLast(ithNode.right);
+                    } else if (ithNode.left!=null) {
+                        iterNodes.addLast(ithNode.left);
+                    }
+                }
+
+                if (key==currentKey && keysIter<keysMapped.size()-1)
+                    keysIter++;
+
+            }
+
+
+
+            int sizeInitial = iterNodes.size();
+            for (int i=0; i<sizeInitial; i++) {
+                Node<V> ithNode = iterNodes.removeFirst();
+                if (keysIter>=keysMapped.size()-1 && ithNode.value!=null){
+                    out.add(ithNode.value);
+                }
+                if (ithNode.left!=null) {
+                    //System.out.println("left: "+ithNode.left.key);
+                    iterNodes.addLast(ithNode.left);
+                }
+                if (ithNode.right!=null) {
+                    //System.out.println("right: "+ithNode.right.key);
+                    iterNodes.addLast(ithNode.right);
+                }
+            }
+
+
+
+            if (relatedKey==currentKey && keysIter<keysMapped.size()-1)
+                keysIter++;
+
+            //System.out.println(currentKey);
+            //System.out.println(relatedKey);
+            //System.out.println(iterNodes.stream().map(x->x.key+" = "+x.value).collect(Collectors.toList()));
+
+            relatedKeyLast = relatedKey;
         }
 
-        LinkedList<Node<V>> out = new LinkedList<>();
-
-        boolean descend = false;
-
-        long currentKey = 1L;
-        while (found<count){
-
-            if (iter.equals(zero)) {
-                descend=true;
-                continue;
+        for (long key = relatedKeyLast+1; key<maxKey; key++){
+            int sizeInitial = iterNodes.size();
+            for (int i=0; i<sizeInitial; i++) {
+                Node<V> ithNode = iterNodes.removeFirst();
+                if (ithNode.left!=null)
+                    iterNodes.addLast(ithNode.left);
             }
+        }
 
-            if (!descend){
-                if (iter.parent.left==iter && iter.parent.right!=null){
-                    iter = iter.parent.right;
-                    descend=true;
-                }
-                iter=iter.parent;
-                currentKey--;
-                continue;
-            }
-
-            if (keySet.contains(currentKey)){
-                if (iter.right!=null){
-                    iter = iter.right;
-                    if (currentKey==max){
-                        if (skipped<start){
-                            skipped++;
-                        } else {
-                            out.add(iter);
-                            found++;
-                        }
-                        descend = false;
-                        continue;
-                    }
-                    currentKey++;
-                } else {
-                    descend = false;
-                }
-
-            } else {
-                if (iter.left!=null){
-                    iter = iter.left;
-                    if (currentKey==max){
-                        if (skipped<start){
-                            skipped++;
-                        } else {
-                            out.add(iter);
-                            found++;
-                        }
-                        descend = false;
-                        continue;
-                    }
-                    currentKey++;
-                } else {
-                    if (iter==rightMost){
-                        break;
-                    }
-                    descend = false;
-                }
+        for (Node<V> n : iterNodes){
+            if (n.value!=null){
+                out.add(n.value);
             }
         }
 
         return out;
     }
 
-    public Iterator<V> findALl(List<K> keys){
-        ArrayList<Long> image = mapAndUpdateMapping(keys);
-
-
-        //TODO implement
-        return null;
-    }
-
     protected static class Node<V>{
         private Node<V> parent;
         private Node<V> left;
         private Node<V> right;
-        private V value;
+        public V value;
+        final Long key;
 
-        public Node(Node<V> parent) {
+        public Node(Node<V> parent, Long key) {
             this.parent = parent;
+            this.key = key;
         }
         public Node() {
-        }
-    }
-
-    protected static class KeySeq<K extends Comparable<K>>
-            implements Comparable<KeySeq<K>>{
-
-        protected ArrayList<K> keys;
-
-        public KeySeq(Collection<K> keys) {
-            this.keys = new ArrayList<>(keys);
-            this.keys.sort(K::compareTo);
-        }
-
-        @Override
-        public int compareTo(KeySeq<K> o) {
-            int min = Math.min(keys.size(),o.keys.size());
-            int max = Math.max(keys.size(),o.keys.size());
-
-            for (int i=0; i<min; i++){
-                int c = keys.get(i).compareTo(o.keys.get(i));
-                if (c!=0){
-                    return -c;
-                }
-            }
-            return max==keys.size()
-                    ?min==max
-                    ? 0
-                    : 1 : -1;
+            key = 1L;
         }
 
         @Override
         public String toString() {
-            return keys.toString();
+            return "Node("+key+':'+value+"){\n left = "+left+"\n right = "+right+"\n}";
         }
     }
-
 
 }
