@@ -149,11 +149,9 @@ public class KeySeqMapTest {
             entries[i]=i+1;
         }
 
-        ArrayList<ArrayList<Integer>> expectedByTest = new ArrayList<>();
 
         for (int[] test : tests) {
 
-            ArrayList<Integer> expectedValues = new ArrayList<>();
 
             for (int i = 0; i < -test[0]; i++) {
 
@@ -172,10 +170,7 @@ public class KeySeqMapTest {
                     toAdd.add(k);
                 }
                 keys.add(new ArrayList<>(toAdd));
-                expectedValues.add(keys.size());
             }
-
-            expectedByTest.add(expectedValues);
         }
 
         for (int i=0; i<unused; i++){
@@ -191,8 +186,6 @@ public class KeySeqMapTest {
             }
             keys.add(new ArrayList<>(toAdd));
         }
-
-        //keys.forEach(System.out::println);
 
         KeySeqMap<Integer,Integer> testMap = new KeySeqMap<>();
         for (int i=0; i<entriesCount; i++){
@@ -218,7 +211,7 @@ public class KeySeqMapTest {
                 System.out.println(actual);
                 System.out.println(testId);
                 System.out.println("\n\n\n");
-            };
+            }
         }
 
     }

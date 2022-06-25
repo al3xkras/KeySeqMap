@@ -21,7 +21,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     protected TreeSet<Long> updateAndGetConnections(ArrayList<Long> keysMapped){
-        //TODO test
         HashSet<Long> first = connections.computeIfAbsent(keysMapped.get(0),k->new HashSet<>());
         first.addAll(keysMapped);
         first.remove(keysMapped.get(0));
@@ -42,7 +41,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     protected ArrayList<Long> mapAndUpdateMapping(Collection<K> keys){
-        //TODO test
         ArrayList<Long> image = new ArrayList<>(keys.size());
 
         keys.forEach(k->{
@@ -62,7 +60,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     private Node<V> createOrFindNode(ArrayList<Long> keys){
-        //TODO test
         Node<V> iter = head;
         long lastKey=1L;
         for (long k : keys){
@@ -87,7 +84,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     public void add(List<K> keys, V value){
-        //TODO test
         ArrayList<Long> image = mapAndUpdateMapping(keys);
         updateConnections(image);
         Node<V> node = createOrFindNode(image);
@@ -95,7 +91,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
     }
 
     public V findExact(Collection<K> keys){
-        //TODO test
         Node<V> node = createOrFindNode(mapAndUpdateMapping(keys));
         return node.value;
     }
@@ -135,7 +130,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                     }
                 }
             }
-
 
             int sizeInitial = iterNodes.size();
             for (int i=0; i<sizeInitial; i++) {
