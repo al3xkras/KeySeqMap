@@ -60,6 +60,8 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
         return image;
     }
 
+
+
     private Node<V> createOrFindNode(ArrayList<Long> keys){
         Node<V> iter = head;
         long lastKey=1L;
@@ -166,22 +168,47 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
 
     @Override
     public int size() {
-        return 0;
+        return size;
     }
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return size==0;
     }
 
     @Override
     public boolean containsKey(Object key) {
+        if (key instanceof Collection){
+            try {
+                ArrayList<Long> image = mapAndUpdateMapping((Collection<K>) key);
+                Node<V> iter = head;
+
+                long lastKey=1L;
+                for (long k : image){
+
+                    for (long kToSkip = lastKey; kToSkip<k; kToSkip++){
+                        if (iter.left==null){
+                            return false;
+                        }
+                        iter = iter.left;
+                    }
+                    if (iter.right==null){
+                        return false;
+                    }
+                    iter = iter.right;
+                    lastKey = k+1;
+                }
+                return iter.value!=null;
+            } catch (ClassCastException e){
+                return false;
+            }
+        }
         return false;
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return false;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -218,6 +245,8 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
                 Node<V> node = createOrFindNode(image);
                 V prev = node.value;
                 node.value=null;
+                if (prev!=null)
+                    size--;
                 return prev;
             } catch (ClassCastException e){
                 return null;

@@ -21,7 +21,6 @@ public class KeySeqMapTest {
         Assert.assertEquals("C", keySeqMap.findExact(Arrays.asList(1,9,10)));
 
         Assert.assertNull(keySeqMap.findExact(Collections.singletonList(10)));
-
     }
 
     @Test
@@ -37,7 +36,6 @@ public class KeySeqMapTest {
         Assert.assertEquals("D", keySeqMap.findExact(Arrays.asList(1,2)));
 
         Assert.assertNull(keySeqMap.findExact(Arrays.asList(1,2,3,4,5553943)));
-
     }
 
     @Test
@@ -51,21 +49,15 @@ public class KeySeqMapTest {
         keySeqMap.put(Arrays.asList(2,4,5),"E");
         keySeqMap.put(Arrays.asList(1,4,6,7),"F");
         keySeqMap.put(Arrays.asList(2,3,5,6),"G");
-
         keySeqMap.put(Arrays.asList(2,4,5,6,8),"H");
-
         keySeqMap.put(Arrays.asList(1,2,4,5,9),"I");
-
         keySeqMap.put(Arrays.asList(2,4,8,10),"J");
         keySeqMap.put(Arrays.asList(2,8,11),"K");
         keySeqMap.put(Arrays.asList(2,4,12),"L");
         keySeqMap.put(Arrays.asList(2,4,8,13),"M");
         keySeqMap.put(Arrays.asList(2,4,8,13,14,9),"N");
-
         keySeqMap.put(Arrays.asList(2,4,8,15),"O");
-
         keySeqMap.put(Arrays.asList(2,4,8,16),"P");
-
         keySeqMap.put(Arrays.asList(2,5,9,14,16,17),"Q");
         keySeqMap.put(Arrays.asList(4,8,16),"R");
 
@@ -83,31 +75,20 @@ public class KeySeqMapTest {
         keySeqMap.put(Arrays.asList(2,4,5),"E");
         keySeqMap.put(Arrays.asList(1,4,6,7),"F");
         keySeqMap.put(Arrays.asList(1,3,5,6),"G");
-
         keySeqMap.put(Arrays.asList(2,4,5,6,8),"H");
-
         keySeqMap.put(Arrays.asList(1,2,4,5,9),"I");
-
         keySeqMap.put(Arrays.asList(2,4,8,10),"J");
         keySeqMap.put(Arrays.asList(2,8,11),"K");
         keySeqMap.put(Arrays.asList(2,4,12),"L");
         keySeqMap.put(Arrays.asList(2,4,8,13),"M");
         keySeqMap.put(Arrays.asList(2,4,8,13,14,9),"N");
-
         keySeqMap.put(Arrays.asList(2,4,8,15),"O");
-
         keySeqMap.put(Arrays.asList(2,4,8,16),"P");
-
         keySeqMap.put(Arrays.asList(2,5,9,17),"Q");
         keySeqMap.put(Arrays.asList(4,8,16),"R");
         keySeqMap.put(Arrays.asList(1,2,3,5,9,17),"S");
 
-        //Iterator<String> all = keySeqMap.findALl();
-
-        //System.out.println(keySeqMap.head);
-
         keySeqMap.findAll(Arrays.asList(4,16)).stream().sorted().forEach(System.out::println);
-
     }
 
 
@@ -213,6 +194,106 @@ public class KeySeqMapTest {
         }
 
     }
+
+
+    @Test
+    public void testSize(){
+        KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>();
+
+        Assert.assertEquals(keySeqMap.size(),0);
+
+        keySeqMap.put(Arrays.asList(1,2,3,4,5,16),"A");
+        keySeqMap.put(Arrays.asList(1,2,4),"B");
+        keySeqMap.put(Arrays.asList(1,3),"C");
+
+        Assert.assertEquals(keySeqMap.size(),3);
+
+        keySeqMap.put(Arrays.asList(1,2,4),"M");
+        Assert.assertEquals(keySeqMap.size(),3);
+
+        keySeqMap.remove(Arrays.asList(1,3));
+        Assert.assertEquals(keySeqMap.size(),2);
+
+        keySeqMap.remove(Arrays.asList(9,19));
+        Assert.assertEquals(keySeqMap.size(),2);
+
+        keySeqMap.put(Arrays.asList(2,5),"D");
+        keySeqMap.put(Arrays.asList(2,4,5),"E");
+        keySeqMap.put(Arrays.asList(1,4,6,7),"F");
+        keySeqMap.put(Arrays.asList(1,3,5,6),"G");
+        keySeqMap.put(Arrays.asList(1,3,5,6),"G1");
+        keySeqMap.put(Arrays.asList(1,4,6,7),"F1");
+
+        Assert.assertEquals(keySeqMap.size(),6);
+
+        keySeqMap.remove(Arrays.asList(1,10,45));
+        Assert.assertEquals(keySeqMap.size(),6);
+
+        keySeqMap.remove(Arrays.asList(1,3,5,6));
+        keySeqMap.remove(Arrays.asList(1,4,6,7));
+        Assert.assertEquals(keySeqMap.size(),4);
+
+
+        keySeqMap.put(Arrays.asList(1,3,5,6),"G2");
+        Assert.assertEquals(keySeqMap.size(),5);
+
+        keySeqMap.put(Arrays.asList(2,4,5,6,8),"H");
+        keySeqMap.remove(Arrays.asList(2,4,5,6,8));
+        keySeqMap.put(Arrays.asList(1,2,4,5,9),"I");
+
+        Assert.assertEquals(keySeqMap.size(),6);
+
+        keySeqMap.remove(Arrays.asList(2,5));
+        keySeqMap.put(Arrays.asList(2,4,8,10),"J");
+        keySeqMap.put(Arrays.asList(2,8,11),"K");
+        Assert.assertEquals(keySeqMap.size(),7);
+
+    }
+
+
+    @Test
+    public void testContainsKey(){
+        KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>();
+
+        keySeqMap.put(Arrays.asList(1,2,3,4,5,16),"A");
+        keySeqMap.put(Arrays.asList(1,2,4),"B");
+        keySeqMap.put(Arrays.asList(1,3),"C");
+
+        Assert.assertFalse(keySeqMap.containsKey(null));
+        Assert.assertFalse(keySeqMap.containsKey("invalid key"));
+        Assert.assertTrue(keySeqMap.containsKey(Arrays.asList(1,2,4)));
+
+        keySeqMap.put(Arrays.asList(1,2,4),"M");
+
+        Assert.assertTrue(keySeqMap.containsKey(Arrays.asList(1,2,4)));
+        Assert.assertTrue(keySeqMap.containsKey(Arrays.asList(1,3)));
+
+        keySeqMap.remove(Arrays.asList(1,3));
+
+        Assert.assertFalse(keySeqMap.containsKey(Arrays.asList(1,3)));
+        Assert.assertFalse(keySeqMap.containsKey(Arrays.asList(9,19)));
+
+        keySeqMap.remove(Arrays.asList(9,19));
+
+        Assert.assertFalse(keySeqMap.containsKey(Arrays.asList(9,19)));
+
+        keySeqMap.put(Arrays.asList(2,5),"D");
+        keySeqMap.put(Arrays.asList(2,4,5),"E");
+        keySeqMap.put(Arrays.asList(1,4,6,7),"F");
+        keySeqMap.put(Arrays.asList(1,3,5,6),"G");
+        keySeqMap.put(Arrays.asList(1,3,5,6),"G1");
+        keySeqMap.put(Arrays.asList(1,4,6,7),"F1");
+
+        Assert.assertTrue(keySeqMap.containsKey(Arrays.asList(1,3,5,6)));
+        Assert.assertTrue(keySeqMap.containsKey(Arrays.asList(2,4,5)));
+
+        keySeqMap.put(Arrays.asList(2,4,5,6,8),"H");
+        keySeqMap.remove(Arrays.asList(2,4,5,6,8));
+        keySeqMap.put(Arrays.asList(1,2,4,5,9),"I");
+
+        Assert.assertFalse(keySeqMap.containsKey(Arrays.asList(2,4,5,6,8)));
+    }
+
 
 }
 
