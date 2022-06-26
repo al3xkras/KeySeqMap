@@ -2,14 +2,16 @@ package ua.alexkras;
 
 import java.util.*;
 
-public class KeySeqMap<K extends Comparable<K>,V> {
+public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V>{
 
-    protected final Node<V> head = new Node<>();
+    private Node<V> head = new Node<>();
 
     private final TreeMap<K,Long> keyMapping = new TreeMap<>();
     private long nextKeyMapping = 1L;
 
     private final TreeMap<Long,HashSet<Long>> connections = new TreeMap<>();
+
+    private int size = 0;
 
     private void updateConnections(ArrayList<Long> keysMapped){
         keysMapped.forEach(k->{
@@ -82,20 +84,12 @@ public class KeySeqMap<K extends Comparable<K>,V> {
         return iter;
     }
 
-    public void add(List<K> keys, V value){
-        ArrayList<Long> image = mapAndUpdateMapping(keys);
-        updateConnections(image);
-        Node<V> node = createOrFindNode(image);
-        node.value=value;
-    }
-
     public V findExact(Collection<K> keys){
         Node<V> node = createOrFindNode(mapAndUpdateMapping(keys));
         return node.value;
     }
 
-
-    protected LinkedList<V> findAll(List<K> keys){
+    public List<V> findAll(List<K> keys){
         LinkedList<V> out = new LinkedList<>();
         ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
         HashSet<Long> keysMappedSet = new HashSet<>(keysMapped);
@@ -168,6 +162,94 @@ public class KeySeqMap<K extends Comparable<K>,V> {
             }
         }
         return out;
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+        return false;
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+        return false;
+    }
+
+    @Override
+    public V get(Object key) {
+        if (key instanceof Collection){
+            try {
+                return findExact((Collection<K>) key);
+            } catch (ClassCastException e){
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public V put(Collection<K> key, V value) {
+        ArrayList<Long> image = mapAndUpdateMapping(key);
+        updateConnections(image);
+        Node<V> node = createOrFindNode(image);
+        V prev = node.value;
+        node.value=value;
+        if (prev==null)
+            size++;
+        return prev;
+    }
+
+
+    @Override
+    public V remove(Object key) {
+        if (key instanceof Collection){
+            try {
+                Collection<K> keys = (Collection<K>) key;
+                ArrayList<Long> image = mapAndUpdateMapping(keys);
+                Node<V> node = createOrFindNode(image);
+                V prev = node.value;
+                node.value=null;
+                return prev;
+            } catch (ClassCastException e){
+                return null;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void putAll(Map<? extends Collection<K>, ? extends V> m) {
+        m.forEach(this::put);
+    }
+
+    @Override
+    public void clear() {
+        head=new Node<>();
+        size=0;
+    }
+
+    @Override
+    public Set<Collection<K>> keySet() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Collection<V> values() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<Entry<Collection<K>, V>> entrySet() {
+        throw new UnsupportedOperationException();
     }
 
     protected static class Node<V>{
