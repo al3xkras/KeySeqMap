@@ -1,12 +1,12 @@
+package ua.alexkras;
+
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class KeySeqMap<K extends Comparable<K>,V> {
 
     protected final Node<V> head = new Node<>();
 
     private final TreeMap<K,Long> keyMapping = new TreeMap<>();
-    private final TreeMap<Long,K> inverseKeyMapping = new TreeMap<>();
     private long nextKeyMapping = 1L;
 
     private final TreeMap<Long,HashSet<Long>> connections = new TreeMap<>();
@@ -47,7 +47,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
             Long mapped = keyMapping.get(k);
             if (mapped==null){
                 keyMapping.put(k,nextKeyMapping);
-                inverseKeyMapping.put(nextKeyMapping,k);
                 image.add(nextKeyMapping);
                 nextKeyMapping++;
                 return;
@@ -68,14 +67,14 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                 if (iter.left==null){
                     ArrayList<Long> index = new ArrayList<>(iter.key);
 
-                    iter.left = new Node<>(iter,index);
+                    iter.left = new Node<>(index);
                 }
                 iter = iter.left;
             }
             if (iter.right==null){
                 ArrayList<Long> index = new ArrayList<>(iter.key);
                 index.add(k);
-                iter.right = new Node<>(iter, index);
+                iter.right = new Node<>(index);
             }
             iter = iter.right;
             lastKey = k+1;
@@ -97,15 +96,13 @@ public class KeySeqMap<K extends Comparable<K>,V> {
 
 
     protected LinkedList<V> findAll(List<K> keys){
-
         LinkedList<V> out = new LinkedList<>();
-
         ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
         HashSet<Long> keysMappedSet = new HashSet<>(keysMapped);
         TreeSet<Long> conn = updateAndGetConnections(keysMapped);
         Long maxKey = keysMapped.get(keysMapped.size()-1);
-
         LinkedList<Node<V>> iterNodes = new LinkedList<>();
+
         iterNodes.add(head);
 
         long relatedKeyLast = 0L;
@@ -118,7 +115,6 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                 for (int i=0; i<sizeInitial; i++) {
                     Node<V> ithNode = iterNodes.removeFirst();
                     if (key>maxKey && ithNode.value!=null){
-                        //System.out.println(maxKey);
                         out.add(ithNode.value);
                     }
 
@@ -135,29 +131,19 @@ public class KeySeqMap<K extends Comparable<K>,V> {
             for (int i=0; i<sizeInitial; i++) {
                 Node<V> ithNode = iterNodes.removeFirst();
                 if (relatedKey>=maxKey && ithNode.value!=null){
-                    //System.out.println(maxKey);
                     out.add(ithNode.value);
                 }
                 if (ithNode.left!=null && !keysMappedSet.contains(relatedKey)) {
-                    //System.out.println("left: "+ithNode.left.key);
                     iterNodes.addLast(ithNode.left);
                 }
                 if (ithNode.right!=null) {
-                    //System.out.println("right: "+ithNode.right.key);
                     iterNodes.addLast(ithNode.right);
                 }
             }
-
-            //System.out.println(currentKey);
-            //System.out.println(relatedKey);
-            //System.out.println(iterNodes.stream().map(x->x.key+" = "+x.value).collect(Collectors.toList()));
-
             relatedKeyLast = relatedKey;
         }
 
-
         for (long key = relatedKeyLast+1; key<maxKey; key++){
-            //System.out.println(iterNodes.stream().map(x->x.key+" = "+x.value).collect(Collectors.toList()));
             int sizeInitial = iterNodes.size();
             for (int i=0; i<sizeInitial; i++) {
                 Node<V> ithNode = iterNodes.removeFirst();
@@ -173,9 +159,7 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                 Node<V> ithNode = iterNodes.removeFirst();
                 if (ithNode.right!=null)
                     iterNodes.addLast(ithNode.right);
-
             }
-            //System.out.println(iterNodes.stream().map(x->x.key+" = "+x.value).collect(Collectors.toList()));
         }
 
         for (Node<V> n : iterNodes){
@@ -183,19 +167,16 @@ public class KeySeqMap<K extends Comparable<K>,V> {
                 out.add(n.value);
             }
         }
-
         return out;
     }
 
     protected static class Node<V>{
-        private Node<V> parent;
         private Node<V> left;
         private Node<V> right;
         public V value;
         final ArrayList<Long> key;
 
-        public Node(Node<V> parent, ArrayList<Long> key) {
-            this.parent = parent;
+        public Node(ArrayList<Long> key) {
             this.key = key;
         }
         public Node() {

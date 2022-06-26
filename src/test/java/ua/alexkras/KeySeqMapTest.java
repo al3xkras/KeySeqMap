@@ -1,9 +1,10 @@
+package ua.alexkras;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class KeySeqMapTest {
@@ -105,10 +106,12 @@ public class KeySeqMapTest {
 
         //System.out.println(keySeqMap.head);
 
-        keySeqMap.findAll(Arrays.asList(1,3,5)).stream().sorted().forEach(System.out::println);
+        keySeqMap.findAll(Arrays.asList(4,16)).stream().sorted().forEach(System.out::println);
 
     }
 
+
+    //Test passed 26.06.2022
     @Test
     public void testFindAll2(){
 
@@ -127,8 +130,9 @@ public class KeySeqMapTest {
                 {-10,7,11,70,110,700,1100,777,1111,999,1199,214,562,895,124,155,156}
         };
 
-        int entriesCount = 1500;
-        int uniqueKeysCount = 2000;
+        int entriesCount = 100000;
+        int uniqueKeysCount = 10000000;
+        int addMax = 1;
 
         int unused = entriesCount;
         Set<Integer> used = new HashSet<>();
@@ -155,7 +159,7 @@ public class KeySeqMapTest {
 
             for (int i = 0; i < -test[0]; i++) {
 
-                int randomKeysCount = -test[0] + ThreadLocalRandom.current().nextInt(1, 51);
+                int randomKeysCount = -test[0] + ThreadLocalRandom.current().nextInt(1, addMax+1);
                 Set<Integer> toAdd = new HashSet<>(randomKeysCount);
                 for (int i1 : test) {
                     if (i1 > 0)
@@ -174,7 +178,7 @@ public class KeySeqMapTest {
         }
 
         for (int i=0; i<unused; i++){
-            int randomKeysCount = ThreadLocalRandom.current().nextInt(1,10);
+            int randomKeysCount = ThreadLocalRandom.current().nextInt(1,addMax+1);
             Set<Integer> toAdd = new HashSet<>(randomKeysCount);
 
             for (int j=0; j<randomKeysCount; j++){
@@ -206,12 +210,6 @@ public class KeySeqMapTest {
 
             Assert.assertNotNull(actual);
             Assert.assertEquals(expected,actual);
-            if (!actual.equals(expected)){
-                System.out.println(expected);
-                System.out.println(actual);
-                System.out.println(testId);
-                System.out.println("\n\n\n");
-            }
         }
 
     }
