@@ -20,7 +20,6 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     }
 
     public V findExact(Collection<K> keys){
-        //TODO test
         ArrayList<Integer> key2 = mapAndUpdateMapping(keys);
         ArrayList<Integer> key1 = splitImageIndices(key2);
         return nodes.findExact(key1).findExact(key2);
@@ -35,18 +34,14 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
         int skipped = 0;
         ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping(keys));
 
-        System.out.println(key1);
-        //System.out.println(nodes);
-
         List<V> out = new LinkedList<>();
         Iterator<KeySeqMapNode<K,V>> nodeIterator = nodes.findAll(key1);
         while (nodeIterator.hasNext()){
 
             KeySeqMapNode<K,V> m = nodeIterator.next();
-            System.out.println(m+"\n\n\n");
 
             Iterator<V> values = m.findAll(keys);
-            values.forEachRemaining(System.out::println);
+
             while (values.hasNext()){
                 if (skip>0 && skipped<skip){
                     skipped++;
@@ -142,9 +137,8 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public boolean containsKey(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Integer> key2 = mapAndUpdateMapping((Collection<K>) key);
-                ArrayList<Integer> key1 = splitImageIndices(key2);
-                return nodes.containsKey(key1) && nodes.findExact(key1).containsKey(key2);
+                ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping((Collection<K>) key));
+                return nodes.containsKey(key1) && nodes.findExact(key1).containsKey(key);
             } catch (ClassCastException e){
                 return false;
             }
@@ -187,13 +181,12 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public V remove(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Integer> key2 = mapAndUpdateMapping((Collection<K>) key);
-                ArrayList<Integer> key1 = splitImageIndices(key2);
+                ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping((Collection<K>) key));
                 if (!nodes.containsKey(key1))
                     return null;
 
                 KeySeqMapNode<K,V> node = nodes.findExact(key1);
-                V last = node.remove(key2);
+                V last = node.remove(key);
                 if (last!=null)
                     size--;
                 return last;

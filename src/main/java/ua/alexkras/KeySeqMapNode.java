@@ -160,7 +160,6 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
                     for (Integer key = relatedKeyLast+1; key<relatedKey; key++){
 
                         int sizeInitial = iterNodes.size();
-
                         for (int i=0; i<sizeInitial; i++) {
                             Node ithNode = iterNodes.removeFirst();
                             if (key>maxKey && ithNode.value!=null){
@@ -180,6 +179,7 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
                                 iterNodes.addLast(ithNode.left);
                             }
                         }
+
                     }
 
                     int sizeInitial = iterNodes.size();
@@ -201,19 +201,25 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
                         }
                     }
                     relatedKeyLast = relatedKey;
+
                 }
 
                 for (int key = relatedKeyLast+1; key<maxKey; key++){
                     int sizeInitial = iterNodes.size();
                     for (int i=0; i<sizeInitial; i++) {
                         Node ithNode = iterNodes.removeFirst();
-                        if (ithNode.left!=null)
+                        if (keysMappedSet.contains(key)){
+                            if (ithNode.right!=null) {
+                                iterNodes.addLast(ithNode.right);
+                            }
+                        } else if (ithNode.left!=null) {
                             iterNodes.addLast(ithNode.left);
-
+                        }
                     }
+
                 }
 
-                if (relatedKeyLast+1<maxKey){
+                if (relatedKeyLast+1<=maxKey){
                     int sizeInitial = iterNodes.size();
                     for (int i=0; i<sizeInitial; i++) {
                         Node ithNode = iterNodes.removeFirst();

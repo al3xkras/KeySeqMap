@@ -93,7 +93,7 @@ public class KeySeqMapTest {
 
     @Test
     public void testFindAll1(){
-        KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>(5);
+        KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>(10);
 
         keySeqMap.put(Arrays.asList(1,2,3,4,5,16),"A");
         keySeqMap.put(Arrays.asList(1,2,4),"B");
@@ -117,8 +117,7 @@ public class KeySeqMapTest {
         keySeqMap.put(Arrays.asList(1,2,5,16),"T");
         keySeqMap.put(Arrays.asList(1,3,5,9,17),"U");
 
-        keySeqMap.findAll(Arrays.asList(1,3)).forEach(System.out::println);
-        System.out.println(keySeqMap.nodes.findExact(keySeqMap.splitImageIndices(new ArrayList<>(Arrays.asList(0,1,4)))));
+        keySeqMap.findAll(Arrays.asList(2,4)).forEach(System.out::println);
     }
 
     @Test
@@ -129,7 +128,8 @@ public class KeySeqMapTest {
     }
 
 
-    //Test passed 26.06.2022
+
+    //Test Passed 04.07.2022 (1847ms)
     @Test
     public void testFindAll3(){
 
@@ -137,14 +137,14 @@ public class KeySeqMapTest {
                 {-50,1},
                 {-20,50},
                 {-10,2,10},
-                {-10,3,4,9,11},
+                {-10,3,8,9,12},
                 {-35,3,4},
                 {-30,9,11},
                 {-35,10,45,34},
                 {-40,10,100,1000,34},
                 {-20,255,511,1023},
                 {-50,999,124,63,34,66},
-                {-15,1,3,5,7,9,13,100,300,563,59,567,478,235,1000},
+                {-15,3,5,7,9,13,100,300,563,59,567,478,235,1000},
                 {-10,7,11,70,110,700,1100,777,1111,999,1199,214,562,895,124,155,156}
         };
 
@@ -173,7 +173,6 @@ public class KeySeqMapTest {
 
 
         for (int[] test : tests) {
-
 
             for (int i = 0; i < -test[0]; i++) {
 
@@ -217,9 +216,11 @@ public class KeySeqMapTest {
         for (int testId = 0; testId<tests.length; testId++) {
             TreeSet<Integer> expected = Arrays.stream(tests[testId]).filter(x -> x > 0).boxed().collect(Collectors.toCollection(TreeSet::new));
 
-            TreeSet<Integer> actual = new TreeSet<>(testMap.findAll(
+            Collection<Integer> found = testMap.findAll(
                     Arrays.stream(tests[testId]).skip(1).boxed().collect(Collectors.toList())
-            ));
+            );
+            TreeSet<Integer> actual = new TreeSet<>(found);
+
 
             actual=actual.stream().map(x->keys.get(x-1)).map(TreeSet::new).reduce((x, y)->{
                 x.retainAll(y);
@@ -228,19 +229,11 @@ public class KeySeqMapTest {
 
             Assert.assertNotNull(actual);
             Assert.assertEquals(expected,actual);
+            Assert.assertEquals(found.size(),-tests[testId][0]);
+            System.out.println(-tests[testId][0]+" "+found.size());
         }
 
     }
-
-    @Test
-    public void testFindAll4(){
-        KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>(5);
-
-        keySeqMap.put(Arrays.asList(1,2,3,4,5,16),"A");
-
-
-    }
-
 
     @Test
     public void testSize(){
