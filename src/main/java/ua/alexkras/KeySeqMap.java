@@ -2,51 +2,71 @@ package ua.alexkras;
 
 import java.util.*;
 
-public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V>{
+public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V> {
 
-    private Node<V> head = new Node<>();
+    private final TreeMap<K,Integer> keyMapping = new TreeMap<>();
+    protected final KeySeqMapNode<Integer,KeySeqMapNode<K,V>> nodes = new KeySeqMapNode<>();
+    private int nextKeyMapping = 1;
 
-    private final TreeMap<K,Long> keyMapping = new TreeMap<>();
-    private long nextKeyMapping = 1L;
+    private long size = 0L;
+    private final int nodeSize;
 
-    private final TreeMap<Long,HashSet<Long>> connections = new TreeMap<>();
-
-    private int size = 0;
-
-    private void updateConnections(ArrayList<Long> keysMapped){
-        keysMapped.forEach(k->{
-            connections.get(k);
-            HashSet<Long> conn = connections.computeIfAbsent(k,x->new HashSet<>());
-            conn.addAll(keysMapped);
-            conn.remove(k);
-        });
+    public KeySeqMap(){
+        nodeSize = 1000;
     }
 
-    protected TreeSet<Long> updateAndGetConnections(ArrayList<Long> keysMapped){
-        HashSet<Long> first = connections.computeIfAbsent(keysMapped.get(0),k->new HashSet<>());
-        first.addAll(keysMapped);
-        first.remove(keysMapped.get(0));
-        TreeSet<Long> intersection =  new TreeSet<>(first);
-
-        keysMapped.stream()
-                .skip(1)
-                .map(k->{
-                    HashSet<Long> conn = connections.computeIfAbsent(k,x->new HashSet<>());
-                    conn.addAll(keysMapped);
-                    conn.remove(k);
-                    return conn;
-                })
-                .forEach(intersection::retainAll);
-
-        //System.out.println(intersection);
-        return intersection;
+    public KeySeqMap(int nodeSize){
+        this.nodeSize = nodeSize;
     }
 
-    protected ArrayList<Long> mapAndUpdateMapping(Collection<K> keys){
-        ArrayList<Long> image = new ArrayList<>(keys.size());
+    public V findExact(Collection<K> keys){
+        //TODO test
+        ArrayList<Integer> key2 = mapAndUpdateMapping(keys);
+        ArrayList<Integer> key1 = splitImageIndices(key2);
+        return nodes.findExact(key1).findExact(key2);
+    }
+
+    public List<V> findAll(Collection<K> keys){
+        return findAll(keys,0,-1);
+    }
+
+    public List<V> findAll(Collection<K> keys, int skip, int count){
+
+        int skipped = 0;
+        ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping(keys));
+
+        System.out.println(key1);
+        //System.out.println(nodes);
+
+        List<V> out = new LinkedList<>();
+        Iterator<KeySeqMapNode<K,V>> nodeIterator = nodes.findAll(key1);
+        while (nodeIterator.hasNext()){
+
+            KeySeqMapNode<K,V> m = nodeIterator.next();
+            System.out.println(m+"\n\n\n");
+
+            Iterator<V> values = m.findAll(keys);
+            values.forEachRemaining(System.out::println);
+            while (values.hasNext()){
+                if (skip>0 && skipped<skip){
+                    skipped++;
+                    values.next();
+                    continue;
+                }
+                if (count>0 && out.size()+1>count){
+                    return out;
+                }
+                out.add(values.next());
+            }
+        }
+        return out;
+    }
+
+    protected ArrayList<Integer> mapAndUpdateMapping(Collection<K> keys){
+        ArrayList<Integer> image = new ArrayList<>(keys.size());
 
         keys.forEach(k->{
-            Long mapped = keyMapping.get(k);
+            Integer mapped = keyMapping.get(k);
             if (mapped==null){
                 keyMapping.put(k,nextKeyMapping);
                 image.add(nextKeyMapping);
@@ -61,114 +81,56 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     }
 
 
-
-    private Node<V> createOrFindNode(ArrayList<Long> keys){
-        Node<V> iter = head;
-        long lastKey=1L;
-        for (long k : keys){
-
-            for (long kToSkip = lastKey; kToSkip<k; kToSkip++){
-                if (iter.left==null){
-                    ArrayList<Long> index = new ArrayList<>(iter.key);
-
-                    iter.left = new Node<>(index);
-                }
-                iter = iter.left;
+    protected Iterator<ArrayList<Integer>> splitImage(ArrayList<Integer> image){
+        return new Iterator<ArrayList<Integer>>() {
+            int imageIter = 0;
+            Integer listIter = (image.get(imageIter)/nodeSize) + 1;
+            @Override
+            public boolean hasNext() {
+                return imageIter<image.size();
             }
-            if (iter.right==null){
-                ArrayList<Long> index = new ArrayList<>(iter.key);
-                index.add(k);
-                iter.right = new Node<>(index);
-            }
-            iter = iter.right;
-            lastKey = k+1;
-        }
-        return iter;
-    }
-
-    public V findExact(Collection<K> keys){
-        Node<V> node = createOrFindNode(mapAndUpdateMapping(keys));
-        return node.value;
-    }
-
-    public List<V> findAll(List<K> keys){
-        LinkedList<V> out = new LinkedList<>();
-        ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
-        HashSet<Long> keysMappedSet = new HashSet<>(keysMapped);
-        TreeSet<Long> conn = updateAndGetConnections(keysMapped);
-        Long maxKey = keysMapped.get(keysMapped.size()-1);
-        LinkedList<Node<V>> iterNodes = new LinkedList<>();
-
-        iterNodes.add(head);
-
-        long relatedKeyLast = 0L;
-        for (long relatedKey : conn) {
-
-            for (long key = relatedKeyLast+1; key<relatedKey; key++){
-
-                int sizeInitial = iterNodes.size();
-
-                for (int i=0; i<sizeInitial; i++) {
-                    Node<V> ithNode = iterNodes.removeFirst();
-                    if (key>maxKey && ithNode.value!=null){
-                        out.add(ithNode.value);
-                    }
-
-                    if (keysMappedSet.contains(key)){
-                        if (ithNode.right!=null)
-                            iterNodes.addLast(ithNode.right);
-                    } else if (ithNode.left!=null) {
-                        iterNodes.addLast(ithNode.left);
+            @Override
+            public ArrayList<Integer> next() {
+                ArrayList<Integer> nextList = new ArrayList<>();
+                Integer key;
+                while ((key=image.get(imageIter))<= (Integer) nodeSize * listIter){
+                    nextList.add(key);
+                    imageIter++;
+                    if (imageIter>=image.size()) {
+                        nextList.add(listIter-1);
+                        return nextList;
                     }
                 }
+                nextList.add(listIter-1);
+                listIter = (image.get(imageIter)/nodeSize) + 1;
+                return nextList;
             }
+        };
+    }
 
-            int sizeInitial = iterNodes.size();
-            for (int i=0; i<sizeInitial; i++) {
-                Node<V> ithNode = iterNodes.removeFirst();
-                if (relatedKey>=maxKey && ithNode.value!=null){
-                    out.add(ithNode.value);
+    protected ArrayList<Integer> splitImageIndices(ArrayList<Integer> image){
+        int imageIter = 0;
+        int listIter = image.get(imageIter)/nodeSize + 1;
+        ArrayList<Integer> out = new ArrayList<>();
+
+        while (imageIter<image.size()){
+
+            while (image.get(imageIter) <= nodeSize * listIter){
+                imageIter++;
+                if (imageIter>=image.size()) {
+                    out.add(listIter-1);
+                    return out;
                 }
-                if (ithNode.left!=null && !keysMappedSet.contains(relatedKey)) {
-                    iterNodes.addLast(ithNode.left);
-                }
-                if (ithNode.right!=null) {
-                    iterNodes.addLast(ithNode.right);
-                }
             }
-            relatedKeyLast = relatedKey;
-        }
-
-        for (long key = relatedKeyLast+1; key<maxKey; key++){
-            int sizeInitial = iterNodes.size();
-            for (int i=0; i<sizeInitial; i++) {
-                Node<V> ithNode = iterNodes.removeFirst();
-                if (ithNode.left!=null)
-                    iterNodes.addLast(ithNode.left);
-
-            }
-        }
-
-        if (relatedKeyLast+1<maxKey){
-            int sizeInitial = iterNodes.size();
-            for (int i=0; i<sizeInitial; i++) {
-                Node<V> ithNode = iterNodes.removeFirst();
-                if (ithNode.right!=null)
-                    iterNodes.addLast(ithNode.right);
-            }
-        }
-
-        for (Node<V> n : iterNodes){
-            if (n.value!=null){
-                out.add(n.value);
-            }
+            out.add(listIter-1);
+            listIter = image.get(imageIter)/nodeSize + 1;
         }
         return out;
     }
 
     @Override
     public int size() {
-        return size;
+        return (int) size;
     }
 
     @Override
@@ -180,25 +142,9 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public boolean containsKey(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Long> image = mapAndUpdateMapping((Collection<K>) key);
-                Node<V> iter = head;
-
-                long lastKey=1L;
-                for (long k : image){
-
-                    for (long kToSkip = lastKey; kToSkip<k; kToSkip++){
-                        if (iter.left==null){
-                            return false;
-                        }
-                        iter = iter.left;
-                    }
-                    if (iter.right==null){
-                        return false;
-                    }
-                    iter = iter.right;
-                    lastKey = k+1;
-                }
-                return iter.value!=null;
+                ArrayList<Integer> key2 = mapAndUpdateMapping((Collection<K>) key);
+                ArrayList<Integer> key1 = splitImageIndices(key2);
+                return nodes.containsKey(key1) && nodes.findExact(key1).containsKey(key2);
             } catch (ClassCastException e){
                 return false;
             }
@@ -215,7 +161,11 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public V get(Object key) {
         if (key instanceof Collection){
             try {
-                return findExact((Collection<K>) key);
+                ArrayList<Integer> key2 = mapAndUpdateMapping((Collection<K>) key);
+                ArrayList<Integer> key1 = splitImageIndices(key2);
+                if (!nodes.containsKey(key1))
+                    return null;
+                return nodes.findExact(key1).findExact(key2);
             } catch (ClassCastException e){
                 return null;
             }
@@ -225,29 +175,28 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
 
     @Override
     public V put(Collection<K> key, V value) {
-        ArrayList<Long> image = mapAndUpdateMapping(key);
-        updateConnections(image);
-        Node<V> node = createOrFindNode(image);
-        V prev = node.value;
-        node.value=value;
-        if (prev==null)
+        ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping(key));
+        KeySeqMapNode<K,V> node = nodes.computeIfAbsent(key1,v->new KeySeqMapNode<>());
+        V last = node.put(key,value);
+        if (last==null)
             size++;
-        return prev;
+        return last;
     }
-
 
     @Override
     public V remove(Object key) {
         if (key instanceof Collection){
             try {
-                Collection<K> keys = (Collection<K>) key;
-                ArrayList<Long> image = mapAndUpdateMapping(keys);
-                Node<V> node = createOrFindNode(image);
-                V prev = node.value;
-                node.value=null;
-                if (prev!=null)
+                ArrayList<Integer> key2 = mapAndUpdateMapping((Collection<K>) key);
+                ArrayList<Integer> key1 = splitImageIndices(key2);
+                if (!nodes.containsKey(key1))
+                    return null;
+
+                KeySeqMapNode<K,V> node = nodes.findExact(key1);
+                V last = node.remove(key2);
+                if (last!=null)
                     size--;
-                return prev;
+                return last;
             } catch (ClassCastException e){
                 return null;
             }
@@ -262,7 +211,7 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
 
     @Override
     public void clear() {
-        head=new Node<>();
+        nodes.clear();
         size=0;
     }
 
@@ -281,23 +230,10 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
         throw new UnsupportedOperationException();
     }
 
-    protected static class Node<V>{
-        private Node<V> left;
-        private Node<V> right;
-        public V value;
-        final ArrayList<Long> key;
-
-        public Node(ArrayList<Long> key) {
-            this.key = key;
-        }
-        public Node() {
-            key = new ArrayList<>();
-        }
-
-        @Override
-        public String toString() {
-            return "Node("+key+':'+value+"){\n left = "+left+"\n right = "+right+"\n}";
-        }
+    @Override
+    public String toString() {
+        return "KeySeqMap{" +
+                "nodes=" + nodes +
+                '}';
     }
-
 }
