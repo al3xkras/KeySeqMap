@@ -12,11 +12,9 @@ public class KeySeqMapTest {
     @Test
     public void testSplitImage1(){
 
-        KeySeqMap<Integer,String> map = new KeySeqMap<>();
-
         ArrayList<Integer> image = new ArrayList<>(Arrays.asList(1,2,4,99,100,101,135,200,201,1000,1100,1101,1115,99999,100010,100100,100000000));
 
-        Iterator<ArrayList<Integer>> it = map.splitImage(image);
+        Iterator<ArrayList<Integer>> it = KeySeqMap.splitImage(image,100);
         Assert.assertTrue(it.hasNext());
         for (;it.hasNext();) {
             ArrayList<Integer> i = it.next();
@@ -26,13 +24,13 @@ public class KeySeqMapTest {
         System.out.println("\n\n\n");
 
         ArrayList<Integer> image2 = new ArrayList<>(Arrays.asList(1,2,4,99,100,101,135,200,201,1000,1100,1101,1115,99999,100010,100100,100000000));
-        ArrayList<Integer> it2 = map.splitImageIndices(image2);
+        ArrayList<Integer> it2 = KeySeqMap.splitImageIndices(image2,100);
         System.out.println(it2);
 
         System.out.println("\n\n\n");
 
         ArrayList<Integer> image3 = new ArrayList<>(Arrays.asList(201,1000,1100,4756,4758,99999,100010,100100,100000000));
-        ArrayList<Integer> it3 = map.splitImageIndices(image3);
+        ArrayList<Integer> it3 = KeySeqMap.splitImageIndices(image3,100);
         System.out.println(it3);
     }
 
@@ -148,7 +146,7 @@ public class KeySeqMapTest {
                 {-10,7,11,70,110,700,1100,777,1111,999,1199,214,562,895,124,155,156}
         };
 
-        int entriesCount = 100000;
+        int entriesCount = 1000000;
         int uniqueKeysCount = 10000000;
         int addMax = 1;
 

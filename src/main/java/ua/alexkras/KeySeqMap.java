@@ -5,24 +5,75 @@ import java.util.*;
 public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V> {
 
     private final TreeMap<K,Integer> keyMapping = new TreeMap<>();
-    protected final KeySeqMapNode<Integer,KeySeqMapNode<K,V>> nodes = new KeySeqMapNode<>();
+    private final KeySeqMapNode<Integer,Object> nodes = new KeySeqMapNode<>();
     private int nextKeyMapping = 1;
 
     private long size = 0L;
+    private final long scale;
     private final int nodeSize;
 
     public KeySeqMap(){
-        nodeSize = 1000;
+        nodeSize = 100;
+        scale = (long) 1e10;
+    }
+
+    public KeySeqMap(long scale, int nodeSize){
+        this.nodeSize = nodeSize;
+        this.scale=scale;
     }
 
     public KeySeqMap(int nodeSize){
         this.nodeSize = nodeSize;
+        this.scale= (long) 1e10;
     }
 
     public V findExact(Collection<K> keys){
-        ArrayList<Integer> key2 = mapAndUpdateMapping(keys);
-        ArrayList<Integer> key1 = splitImageIndices(key2);
-        return nodes.findExact(key1).findExact(key2);
+        KeySeqMapNode<K,V> exactNode = findExactNode(keys);
+        return exactNode==null?null:exactNode.findExact(keys);
+    }
+
+    private KeySeqMapNode<K,V> findExactNode(Collection<K> keys){
+        ArrayList<Integer> keyInitial = mapAndUpdateMapping(keys);
+        KeySeqMapNode<Integer,Object> iterNodes = nodes;
+
+        long currentScale = scale;
+        while (currentScale>nodeSize){
+            Object nextNode = iterNodes.findExact(splitImageIndices(keyInitial,currentScale));
+            if (nextNode==null)
+                return null;
+            iterNodes = (KeySeqMapNode<Integer, Object>) nextNode;
+            currentScale/=2;
+        }
+       return (KeySeqMapNode<K, V>) iterNodes.findExact(splitImageIndices(keyInitial,currentScale));
+    }
+
+    private LinkedList<KeySeqMapNode<K,V>> findAllNodes(Collection<K> keys){
+        //TODO test
+        ArrayList<Integer> keyInitial = mapAndUpdateMapping(keys);
+
+        LinkedList<KeySeqMapNode<K,Object>> iter = new LinkedList<>();
+
+        long currentScale = scale;
+        nodes.findAll(splitImageIndices(keyInitial,currentScale),0,-1)
+             .forEachRemaining(o->iter.add((KeySeqMapNode<K, Object>) o));
+        currentScale/=2;
+
+        while (currentScale>nodeSize){
+            int sizeInitial = iter.size();
+            for (int i=0;i<sizeInitial;i++){
+                iter.removeFirst().findAll(splitImageIndices(keyInitial,currentScale),0,-1)
+                        .forEachRemaining(o->iter.add((KeySeqMapNode<K, Object>) o));
+            }
+            currentScale/=2;
+        }
+
+        LinkedList<KeySeqMapNode<K,V>> out = new LinkedList<>();
+        long finalCurrentScale = currentScale;
+        iter.forEach(
+                o->o.findAll(splitImageIndices(keyInitial, finalCurrentScale),0,-1)
+                        .forEachRemaining(o1->out.add((KeySeqMapNode<K, V>) o1))
+        );
+        return out;
     }
 
     public List<V> findAll(Collection<K> keys){
@@ -30,25 +81,21 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     }
 
     public List<V> findAll(Collection<K> keys, int skip, int count){
-
+        //TODO test
         int skipped = 0;
-        ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping(keys));
 
         List<V> out = new LinkedList<>();
-        Iterator<KeySeqMapNode<K,V>> nodeIterator = nodes.findAll(key1);
-        while (nodeIterator.hasNext()){
-
-            KeySeqMapNode<K,V> m = nodeIterator.next();
+        for (KeySeqMapNode<K, V> m : findAllNodes(keys)) {
 
             Iterator<V> values = m.findAll(keys);
 
-            while (values.hasNext()){
-                if (skip>0 && skipped<skip){
+            while (values.hasNext()) {
+                if (skip > 0 && skipped < skip) {
                     skipped++;
                     values.next();
                     continue;
                 }
-                if (count>0 && out.size()+1>count){
+                if (count > 0 && out.size() + 1 > count) {
                     return out;
                 }
                 out.add(values.next());
@@ -76,10 +123,10 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     }
 
 
-    protected Iterator<ArrayList<Integer>> splitImage(ArrayList<Integer> image){
+    protected static Iterator<ArrayList<Integer>> splitImage(ArrayList<Integer> image, long nodeSize){
         return new Iterator<ArrayList<Integer>>() {
             int imageIter = 0;
-            Integer listIter = (image.get(imageIter)/nodeSize) + 1;
+            int listIter = (int) (image.get(imageIter)/nodeSize + 1);
             @Override
             public boolean hasNext() {
                 return imageIter<image.size();
@@ -88,7 +135,7 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
             public ArrayList<Integer> next() {
                 ArrayList<Integer> nextList = new ArrayList<>();
                 Integer key;
-                while ((key=image.get(imageIter))<= (Integer) nodeSize * listIter){
+                while ((key=image.get(imageIter))<= nodeSize * listIter){
                     nextList.add(key);
                     imageIter++;
                     if (imageIter>=image.size()) {
@@ -97,15 +144,15 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
                     }
                 }
                 nextList.add(listIter-1);
-                listIter = (image.get(imageIter)/nodeSize) + 1;
+                listIter = (int) (image.get(imageIter)/nodeSize + 1);
                 return nextList;
             }
         };
     }
 
-    protected ArrayList<Integer> splitImageIndices(ArrayList<Integer> image){
+    protected static ArrayList<Integer> splitImageIndices(ArrayList<Integer> image, long nodeSize){
         int imageIter = 0;
-        int listIter = image.get(imageIter)/nodeSize + 1;
+        int listIter = (int) (image.get(imageIter)/nodeSize + 1);
         ArrayList<Integer> out = new ArrayList<>();
 
         while (imageIter<image.size()){
@@ -118,7 +165,7 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
                 }
             }
             out.add(listIter-1);
-            listIter = image.get(imageIter)/nodeSize + 1;
+            listIter = (int) (image.get(imageIter)/nodeSize + 1);
         }
         return out;
     }
@@ -137,8 +184,7 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public boolean containsKey(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping((Collection<K>) key));
-                return nodes.containsKey(key1) && nodes.findExact(key1).containsKey(key);
+                return findExact((Collection<K>) key)!=null;
             } catch (ClassCastException e){
                 return false;
             }
@@ -155,11 +201,7 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public V get(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Integer> key2 = mapAndUpdateMapping((Collection<K>) key);
-                ArrayList<Integer> key1 = splitImageIndices(key2);
-                if (!nodes.containsKey(key1))
-                    return null;
-                return nodes.findExact(key1).findExact(key2);
+                return findExact((Collection<K>) key);
             } catch (ClassCastException e){
                 return null;
             }
@@ -169,9 +211,18 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
 
     @Override
     public V put(Collection<K> key, V value) {
-        ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping(key));
-        KeySeqMapNode<K,V> node = nodes.computeIfAbsent(key1,v->new KeySeqMapNode<>());
-        V last = node.put(key,value);
+        ArrayList<Integer> keyInitial = mapAndUpdateMapping(key);
+        KeySeqMapNode<Integer,Object> iterNodes = nodes;
+
+        long currentScale = scale;
+        while (currentScale>nodeSize){
+            Object nextNode = iterNodes.computeIfAbsent(splitImageIndices(keyInitial,currentScale),k->new KeySeqMapNode<Integer,Object>());
+            iterNodes = (KeySeqMapNode<Integer, Object>) nextNode;
+            currentScale/=2;
+        }
+        KeySeqMapNode<K, V> exactNode = (KeySeqMapNode<K, V>) iterNodes.computeIfAbsent(splitImageIndices(keyInitial,currentScale),k->new KeySeqMapNode<K,V>());
+
+        V last = exactNode.put(key,value);
         if (last==null)
             size++;
         return last;
@@ -181,11 +232,9 @@ public class KeySeqMap<K extends Comparable<K>,V> implements Map<Collection<K>,V
     public V remove(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Integer> key1 = splitImageIndices(mapAndUpdateMapping((Collection<K>) key));
-                if (!nodes.containsKey(key1))
+                KeySeqMapNode<K,V> node = findExactNode((Collection<K>) key);
+                if (node==null)
                     return null;
-
-                KeySeqMapNode<K,V> node = nodes.findExact(key1);
                 V last = node.remove(key);
                 if (last!=null)
                     size--;
