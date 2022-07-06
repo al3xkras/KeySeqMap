@@ -10,31 +10,6 @@ import java.util.stream.Collectors;
 public class KeySeqMapTest {
 
     @Test
-    public void testSplitImage1(){
-
-        ArrayList<Integer> image = new ArrayList<>(Arrays.asList(1,2,4,99,100,101,135,200,201,1000,1100,1101,1115,99999,100010,100100,100000000));
-
-        Iterator<ArrayList<Integer>> it = KeySeqMap.splitImage(image,100);
-        Assert.assertTrue(it.hasNext());
-        for (;it.hasNext();) {
-            ArrayList<Integer> i = it.next();
-            System.out.println(i);
-        }
-
-        System.out.println("\n\n\n");
-
-        ArrayList<Integer> image2 = new ArrayList<>(Arrays.asList(1,2,4,99,100,101,135,200,201,1000,1100,1101,1115,99999,100010,100100,100000000));
-        ArrayList<Integer> it2 = KeySeqMap.splitImageIndices(image2,100);
-        System.out.println(it2);
-
-        System.out.println("\n\n\n");
-
-        ArrayList<Integer> image3 = new ArrayList<>(Arrays.asList(201,1000,1100,4756,4758,99999,100010,100100,100000000));
-        ArrayList<Integer> it3 = KeySeqMap.splitImageIndices(image3,100);
-        System.out.println(it3);
-    }
-
-    @Test
     public void testFindExact1(){
 
         KeySeqMap<Integer,String> keySeqMap = new KeySeqMap<>();
@@ -127,7 +102,7 @@ public class KeySeqMapTest {
 
 
 
-    //Test Passed 04.07.2022 (1847ms)
+    //Test Passed 06.07.2022
     @Test
     public void testFindAll3(){
 
@@ -148,7 +123,7 @@ public class KeySeqMapTest {
 
         int entriesCount = 100000;
         int uniqueKeysCount = 10000000;
-        int addMax = 1;
+        int addMax = 10;
 
         int unused = entriesCount;
         Set<Integer> used = new HashSet<>();

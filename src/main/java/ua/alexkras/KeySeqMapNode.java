@@ -7,52 +7,52 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
 
     private Node head = new Node();
 
-    private final TreeMap<K,Integer> keyMapping;
-    private final TreeMap<Integer,K> inverseKeyMapping;
-    private int nextKeyMapping = 1;
+    private final TreeMap<K,Long> keyMapping;
+    private final TreeMap<Long,K> inverseKeyMapping;
+    private long nextKeyMapping = 1;
 
-    private final TreeMap<Integer,HashSet<Integer>> connections = new TreeMap<>();
+    private final TreeMap<Long,HashSet<Long>> connections = new TreeMap<>();
 
-    private int size = 0;
+    private long size = 0;
 
     public KeySeqMapNode() {
         this.keyMapping = new TreeMap<>();
         this.inverseKeyMapping = new TreeMap<>();
     }
 
-    private void updateConnections(ArrayList<Integer> keysMapped){
+    private void updateConnections(ArrayList<Long> keysMapped){
         keysMapped.forEach(k->{
             connections.get(k);
-            HashSet<Integer> conn = connections.computeIfAbsent(k,x->new HashSet<>());
+            HashSet<Long> conn = connections.computeIfAbsent(k,x->new HashSet<>());
             conn.addAll(keysMapped);
             conn.remove(k);
         });
     }
 
-    protected TreeSet<Integer> updateAndGetConnections(ArrayList<Integer> keysMapped){
-        HashSet<Integer> first = connections.computeIfAbsent(keysMapped.get(0),k->new HashSet<>());
+    protected TreeSet<Long> updateAndGetConnections(ArrayList<Long> keysMapped){
+        HashSet<Long> first = connections.computeIfAbsent(keysMapped.get(0),k->new HashSet<>());
         first.addAll(keysMapped);
         first.remove(keysMapped.get(0));
-        TreeSet<Integer> intersection =  new TreeSet<>(first);
+        TreeSet<Long> longersection =  new TreeSet<>(first);
 
         keysMapped.stream()
                 .skip(1)
                 .map(k->{
-                    HashSet<Integer> conn = connections.computeIfAbsent(k,x->new HashSet<>());
+                    HashSet<Long> conn = connections.computeIfAbsent(k,x->new HashSet<>());
                     conn.addAll(keysMapped);
                     conn.remove(k);
                     return conn;
                 })
-                .forEach(intersection::retainAll);
+                .forEach(longersection::retainAll);
 
-        return intersection;
+        return longersection;
     }
 
-    protected ArrayList<Integer> mapAndUpdateMapping(Collection<K> keys){
-        ArrayList<Integer> image = new ArrayList<>(keys.size());
+    protected ArrayList<Long> mapAndUpdateMapping(Collection<K> keys){
+        ArrayList<Long> image = new ArrayList<>(keys.size());
 
         keys.forEach(k->{
-            Integer mapped = keyMapping.get(k);
+            Long mapped = keyMapping.get(k);
             if (mapped==null){
                 keyMapping.put(k,nextKeyMapping);
                 inverseKeyMapping.put(nextKeyMapping,k);
@@ -69,12 +69,12 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
 
 
 
-    private Node createOrFindNode(ArrayList<Integer> keys){
+    private Node createOrFindNode(ArrayList<Long> keys){
         Node iter = head;
-        int lastKey=1;
-        for (Integer k : keys){
+        long lastKey=1;
+        for (Long k : keys){
 
-            for (int kToSkip = lastKey; kToSkip<k; kToSkip++){
+            for (long kToSkip = lastKey; kToSkip<k; kToSkip++){
                 if (iter.left==null){
                     ArrayList<K> index = new ArrayList<>(iter.key);
 
@@ -93,7 +93,7 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
         return iter;
     }
 
-    protected V findExact(ArrayList<Integer> image){
+    protected V findExact(ArrayList<Long> image){
         Node node = createOrFindNode(image);
         return node.value;
     }
@@ -103,24 +103,24 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
         return node.value;
     }
 
-    protected Iterator<V> findAll(ArrayList<Integer> keysMapped, int skip, int count){
+    protected Iterator<V> findAll(ArrayList<Long> keysMapped, long skip, long count){
         return new Iterator<V>() {
-            private int skipped = 0;
-            private int found = 0;
-            private final HashSet<Integer> keysMappedSet = new HashSet<>(keysMapped);
-            private final Iterator<Integer> conn;
-            private final Integer maxKey = keysMapped.get(keysMapped.size()-1);
+            private long skipped = 0;
+            private long found = 0;
+            private final HashSet<Long> keysMappedSet = new HashSet<>(keysMapped);
+            private final Iterator<Long> conn;
+            private final Long maxKey = keysMapped.get(keysMapped.size()-1);
             private final LinkedList<Node> iterNodes = new LinkedList<>();
             private final Queue<V> lastIterFound = new LinkedList<>();
             private final boolean exact;
             private boolean foundExact = false;
             {
                 iterNodes.add(head);
-                TreeSet<Integer> connections = updateAndGetConnections(keysMapped);
+                TreeSet<Long> connections = updateAndGetConnections(keysMapped);
                 conn = connections.iterator();
                 exact = connections.isEmpty();
             }
-            int relatedKeyLast = 0;
+            long relatedKeyLast = 0;
             boolean lastIter = false;
 
             @Override
@@ -155,12 +155,12 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
                     return;
                 }
                 while (conn.hasNext()) {
-                    Integer relatedKey = conn.next();
+                    Long relatedKey = conn.next();
 
-                    for (Integer key = relatedKeyLast+1; key<relatedKey; key++){
+                    for (Long key = relatedKeyLast+1; key<relatedKey; key++){
 
-                        int sizeInitial = iterNodes.size();
-                        for (int i=0; i<sizeInitial; i++) {
+                        long sizeInitial = iterNodes.size();
+                        for (long i=0; i<sizeInitial; i++) {
                             Node ithNode = iterNodes.removeFirst();
                             if (key>maxKey && ithNode.value!=null){
                                 if (skipped<skip){
@@ -182,8 +182,8 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
 
                     }
 
-                    int sizeInitial = iterNodes.size();
-                    for (int i=0; i<sizeInitial; i++) {
+                    long sizeInitial = iterNodes.size();
+                    for (long i=0; i<sizeInitial; i++) {
                         Node ithNode = iterNodes.removeFirst();
                         if (relatedKey>=maxKey && ithNode.value!=null){
                             if (skipped<skip){
@@ -204,9 +204,9 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
 
                 }
 
-                for (int key = relatedKeyLast+1; key<maxKey; key++){
-                    int sizeInitial = iterNodes.size();
-                    for (int i=0; i<sizeInitial; i++) {
+                for (long key = relatedKeyLast+1; key<maxKey; key++){
+                    long sizeInitial = iterNodes.size();
+                    for (long i=0; i<sizeInitial; i++) {
                         Node ithNode = iterNodes.removeFirst();
                         if (keysMappedSet.contains(key)){
                             if (ithNode.right!=null) {
@@ -220,8 +220,8 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
                 }
 
                 if (relatedKeyLast+1<=maxKey){
-                    int sizeInitial = iterNodes.size();
-                    for (int i=0; i<sizeInitial; i++) {
+                    long sizeInitial = iterNodes.size();
+                    for (long i=0; i<sizeInitial; i++) {
                         Node ithNode = iterNodes.removeFirst();
                         if (ithNode.right!=null)
                             iterNodes.addLast(ithNode.right);
@@ -247,12 +247,12 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
     }
 
     public Iterator<V> findAll(Collection<K> keys){
-        ArrayList<Integer> keysMapped = mapAndUpdateMapping(keys);
+        ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
         return findAll(keysMapped,0,-1);
     }
 
     public List<V> findAll(Collection<K> keys, int skip, int count){
-        ArrayList<Integer> keysMapped = mapAndUpdateMapping(keys);
+        ArrayList<Long> keysMapped = mapAndUpdateMapping(keys);
         ArrayList<V> out = new ArrayList<>(count);
         findAll(keysMapped,skip,count).forEachRemaining(out::add);
         return out;
@@ -261,7 +261,9 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
 
     @Override
     public int size() {
-        return size;
+        if (size>Integer.MAX_VALUE)
+            return Integer.MAX_VALUE;
+        return (int) size;
     }
 
     @Override
@@ -273,13 +275,13 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
     public boolean containsKey(Object key) {
         if (key instanceof Collection){
             try {
-                ArrayList<Integer> image = mapAndUpdateMapping((Collection<K>) key);
+                ArrayList<Long> image = mapAndUpdateMapping((Collection<K>) key);
                 Node iter = head;
 
-                int lastKey=1;
-                for (Integer k : image){
+                long lastKey=1;
+                for (Long k : image){
 
-                    for (int kToSkip = lastKey; kToSkip<k; kToSkip++){
+                    for (long kToSkip = lastKey; kToSkip<k; kToSkip++){
                         if (iter.left==null){
                             return false;
                         }
@@ -318,7 +320,7 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
 
     @Override
     public V put(Collection<K> key, V value) {
-        ArrayList<Integer> image = mapAndUpdateMapping(key);
+        ArrayList<Long> image = mapAndUpdateMapping(key);
         updateConnections(image);
         Node node = createOrFindNode(image);
         V prev = node.value;
@@ -334,7 +336,7 @@ public class KeySeqMapNode<K extends Comparable<K>,V> implements Map<Collection<
         if (key instanceof Collection){
             try {
                 Collection<K> keys = (Collection<K>) key;
-                ArrayList<Integer> image = mapAndUpdateMapping(keys);
+                ArrayList<Long> image = mapAndUpdateMapping(keys);
                 Node node = createOrFindNode(image);
                 V prev = node.value;
                 node.value=null;
