@@ -146,7 +146,7 @@ public class KeySeqMapTest {
                 {-10,7,11,70,110,700,1100,777,1111,999,1199,214,562,895,124,155,156}
         };
 
-        int entriesCount = 1000000;
+        int entriesCount = 100000;
         int uniqueKeysCount = 10000000;
         int addMax = 1;
 
